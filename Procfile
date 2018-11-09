@@ -1,0 +1,1 @@
+web: python dg-SmartHome-cp.py
