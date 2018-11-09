@@ -1,6 +1,9 @@
-from secure import NAME, TOKEN, TOPIC
-
+#from secure import NAME, TOKEN, TOPIC
 import os
+NAME = os.environ.get('NAME', None)
+TOKEN = os.environ.get('TOKEN', None)
+TOPIC = os.environ.get('TOPIC', None)
+
 import paho.mqtt.client as mqtt #pip install paho-mqtt
 import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
@@ -19,7 +22,7 @@ reply_OFF = "Выключено"
 icon_ON=u'\U00002705'    #2705
 icon_OFF=u'\U0000274C'  #274C
 
-chat_ids = [199220133, ]
+chat_ids = [199220133, 537459034]
 
 bot = telegram.Bot(token=TOKEN, base_url='dg-telegram-bot-2.herokuapp.com/bot')
 
