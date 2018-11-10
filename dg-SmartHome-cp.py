@@ -67,7 +67,7 @@ mqttc.on_subscribe = on_subscribe
 #mqttc.on_log = on_log
 
 # Parse CLOUDMQTT_URL (or fallback to localhost)
-url = urlparse.urlparse(url_str)
+url = urlparse.urlparse(URL_STR)
 
 # Connect
 mqttc.username_pw_set(url.username, url.password)
