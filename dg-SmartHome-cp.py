@@ -3,6 +3,7 @@ import os
 NAME = os.environ.get('NAME', None)
 TOKEN = os.environ.get('TOKEN', None)
 TOPIC = os.environ.get('TOPIC', None)
+URL_STR = os.environ.get('URL_STR', None)
 
 import paho.mqtt.client as mqtt #pip install paho-mqtt
 
@@ -66,13 +67,12 @@ mqttc.on_subscribe = on_subscribe
 #mqttc.on_log = on_log
 
 # Parse CLOUDMQTT_URL (or fallback to localhost)
-url_str = 'mqtt://esp12:esp12123qwe@m23.cloudmqtt.com:12042'
 url = urlparse.urlparse(url_str)
 
 # Connect
 mqttc.username_pw_set(url.username, url.password)
-#mqttc.connect(url.hostname, url.port)
-mqttc.connect_async(url.hostname, url.port)
+mqttc.connect(url.hostname, url.port)
+#mqttc.connect_async(url.hostname, url.port)
 
 # Start subscribe, with QoS level 0
 mqttc.subscribe(TOPIC)
