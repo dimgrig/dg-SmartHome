@@ -71,7 +71,8 @@ url = urlparse.urlparse(url_str)
 
 # Connect
 mqttc.username_pw_set(url.username, url.password)
-mqttc.connect(url.hostname, url.port)
+#mqttc.connect(url.hostname, url.port)
+mqttc.connect_async(url.hostname, url.port)
 
 # Start subscribe, with QoS level 0
 mqttc.subscribe(TOPIC)
