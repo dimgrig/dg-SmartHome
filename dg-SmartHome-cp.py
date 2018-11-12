@@ -148,7 +148,7 @@ class BotComm(object):
       elif reset in update.message.text:
         #os.execv(__file__, sys.argv)
         update.message.reply_text(text="Перезагружаем")
-        os.execl(sys.executable, 'python', __file__, *sys.argv[1:])        
+        os.execl(sys.executable, 'python', __file__)        
       else:
         update.message.reply_text(text=update.message.text)
     
