@@ -22,6 +22,7 @@ text_ON = "Включить"
 text_OFF = "Выключить"
 reply_ON = "Включено"
 reply_OFF = "Выключено"
+reset = "Перезагрузка"
 
 #https://apps.timwhitlock.info/emoji/tables/unicode
 icon_ON=u'\U00002705'    #2705
@@ -84,7 +85,7 @@ def send_KB_():
     reply = reply_ON if TOPIC_STATUS else reply_OFF
     #print(icon, not_icon, text)
     custom_keyboard = [['РЕЗЕРВ', 'Cвет в спальне  ' + icon ],
-                        ['РЕЗЕРВ', text + "  " + not_icon]] 
+                        [reset, text + "  " + not_icon]] 
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
     for chat_id in chat_ids:
         bot.send_message(chat_id=chat_id, text=reply + " " + icon, reply_markup=reply_markup)
@@ -144,6 +145,10 @@ class BotComm(object):
         mqttc.publish(TOPIC, "OFF", 0, True)
         #TOPIC_STATUS = 0
         #send_KB(bot, update)
+      elif reset in update.message.text:
+        #os.execv(__file__, sys.argv)
+        update.message.reply_text(text="Перезагружаем")
+        os.execl(sys.executable, 'python', __file__, *sys.argv[1:])        
       else:
         update.message.reply_text(text=update.message.text)
     
