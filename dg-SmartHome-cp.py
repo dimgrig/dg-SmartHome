@@ -16,7 +16,6 @@ import time
 import threading
 import urllib.parse as urlparse
 
-
 TOPIC_STATUS = 0
 text_ON = "Включить"
 text_OFF = "Выключить"
