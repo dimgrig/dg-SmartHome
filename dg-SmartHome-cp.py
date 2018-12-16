@@ -151,8 +151,29 @@ class BotComm(object):
         os.execl(sys.executable, 'python', __file__)        
       else:
         update.message.reply_text(text=update.message.text)
-    
 
+    
+class ExcThread(threading.Thread):
+    """LogThread should always e used in preference to threading.Thread.
+
+    The interface provided by LogThread is identical to that of threading.Thread,
+    however, if an exception occurs in the thread the error will be logged
+    (using logging.exception) rather than printed to stderr.
+
+    This is important in daemon style applications where stderr is redirected
+    to /dev/null.
+
+    """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self._real_run = self.run
+        self.run = self._wrap_run
+
+    def _wrap_run(self):
+        try:
+            self._real_run()
+        except:
+            print("CATCHED EXCEPTION")
 
 
 if __name__ == "__main__":
@@ -169,10 +190,12 @@ if __name__ == "__main__":
                         {'/': {'request.dispatch': cherrypy.dispatch.MethodDispatcher()}})
 
     print('START ... ')
-    thread1 = threading.Thread(target=mqttc.loop_start())    
+    #thread1 = threading.Thread(target=mqttc.loop_start())
+    thread1 = ExcThread(target=mqttc.loop_start())
     thread1.start()
     print('MIDDLE ... ')
-    thread2 = threading.Thread(target=cherrypy.engine.start()) #  updater.idle()
+    #thread2 = threading.Thread(target=cherrypy.engine.start()) #  updater.idle()
+    thread2 = ExcThread(target=cherrypy.engine.start()) #  updater.idle()
     thread2.start()
     print('END ... ')
     
