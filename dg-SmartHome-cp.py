@@ -30,7 +30,7 @@ icon_OFF=u'\U0000274C'  #274C
 
 chat_ids = [199220133, 537459034]
 
-bot = telegram.Bot(token=TOKEN, base_url='dg-telegram-bot-2.herokuapp.com/bot')
+bot = telegram.Bot(token=TOKEN, base_url='api.telegram.org/bot') #base_url='dg-telegram-bot-2.herokuapp.com/bot')
 
 logging.basicConfig(level=logging.DEBUG,
                     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
