@@ -46,16 +46,17 @@ def on_connect(client, userdata, flags, rc):
 
 def on_message(client, obj, msg):
     global TOPIC_STATUS
-    print("on_message " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-    for t,s,c in TOPIC,TOPIC_STATUS,TOPIC_CHANGES:
-        if s == t:
-            c = 1
+    print("on_message " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))    
+    for i, t in enumerate(TOPIC):
+        if msg.topic == t:
+            TOPIC_CHANGES[i] = 1
             if msg.payload == b'ON':
-                s = 1
+                TOPIC_STATUS[i] = 1
             elif msg.payload == b'OFF':
-                s = 0          
-    print(TOPIC_STATUS, TOPIC_CHANGES)
-    send_KB_()
+                TOPIC_STATUS[i] = 0          
+    print(TOPIC,TOPIC_STATUS,TOPIC_CHANGES)
+    send_KB_()  
+    
     
 def on_publish(client, obj, mid):
     print("on_publish mid: " + str(mid))
@@ -89,21 +90,27 @@ for t in TOPIC:
     mqttc.subscribe(t)
 
 def send_KB_():
-    icon = ["",]
-    not_icon = ["",]
-    text = ["",]
-    for i,ni,t,s,c in icon,not_icon,text,TOPIC_STATUS,TOPIC_CHANGES:
-        i = icon_ON if s else icon_OFF
-        ni = icon_OFF if s else icon_ON
-        t = text_OFF if s else text_ON
+    icon = []
+    not_icon = []
+    text = []
+    reply = " "
+    icon_reply = " "
+    for s,c in zip(TOPIC_STATUS,TOPIC_CHANGES):
+        icon.append(icon_ON if s else icon_OFF)
+        not_icon.append(icon_OFF if s else icon_ON)
+        text.append(text_OFF if s else text_ON)
         if c == 1:
             reply = reply_ON if s else reply_OFF
-    #print(icon, not_icon, text)
+            icon_reply = icon_ON if s else icon_OFF
+    print(icon, not_icon, text)            
     custom_keyboard = [[text_topic[1] + icon[1], text_topic[0] + icon[0]],
-                        [text_topic[1] + "  " + text[1] + "  " + not_icon[1], text_topic[0] + "  " + text[0] + "  " + not_icon[0]]] 
+                        [text_topic[1] + "\n" + text[1] + "  " + not_icon[1], text_topic[0] + "\n" + text[0] + "  " + not_icon[0]]] 
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
+    
     for chat_id in chat_ids:
-        bot.send_message(chat_id=chat_id, text=reply + " " + icon, reply_markup=reply_markup)
+        bot.send_message(chat_id=chat_id, text=reply + " " + icon_reply, reply_markup=reply_markup)
+    TOPIC_CHANGES[0] = 0
+    TOPIC_CHANGES[1] = 0
 
 
 class SimpleWebsite(object):
@@ -145,21 +152,25 @@ class BotComm(object):
         update.effective_message.reply_text("Hi!")
 
     def _handler(self, bot, update):
-      global TOPIC
-      global TOPIC_STATUS
-      #print(update.message.chat_id, update.message.text)
-      if update.message.text == 'kb' or update.message.text == 'keyboard':
-        send_KB_()
-      elif text_ON in update.message.text and text_topic[0] in update.message.text:
-        mqttc.publish(TOPIC[0], "ON", 0, True)
-      elif text_OFF in update.message.text and text_topic[0] in update.message.text:
-        mqttc.publish(TOPIC[0], "OFF", 0, True)
-      elif text_ON in update.message.text and text_topic[1] in update.message.text:
-        mqttc.publish(TOPIC[1], "ON", 0, True)
-      elif text_OFF in update.message.text and text_topic[1] in update.message.text:
-        mqttc.publish(TOPIC[1], "OFF", 0, True)   
-      else:
-        update.message.reply_text(text=update.message.text)
+        global TOPIC
+        global TOPIC_STATUS
+        #print(update.message.chat_id, update.message.text)
+        if update.message.text == 'kb' or update.message.text == 'keyboard':
+            send_KB_()
+        elif text_ON in update.message.text and text_topic[0] in update.message.text:
+            mqttc.publish(TOPIC[0], "ON", 0, True)
+            TOPIC_CHANGES[0] = 1
+        elif text_OFF in update.message.text and text_topic[0] in update.message.text:
+            mqttc.publish(TOPIC[0], "OFF", 0, True)
+            TOPIC_CHANGES[0] = 1
+        elif text_ON in update.message.text and text_topic[1] in update.message.text:
+            mqttc.publish(TOPIC[1], "ON", 0, True)
+            TOPIC_CHANGES[1] = 1
+        elif text_OFF in update.message.text and text_topic[1] in update.message.text:
+            mqttc.publish(TOPIC[1], "OFF", 0, True)
+            TOPIC_CHANGES[1] = 1
+        else:
+            update.message.reply_text(text=update.message.text)
 
     
 class ExcThread(threading.Thread):
