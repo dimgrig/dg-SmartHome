@@ -2,8 +2,9 @@
 import os
 NAME = os.environ.get('NAME', None)
 TOKEN = os.environ.get('TOKEN', None)
-TOPIC = os.environ.get('TOPIC', None)
+TOPIC = [os.environ.get('TOPIC_1', None), os.environ.get('TOPIC_2', None)]
 URL_STR = os.environ.get('URL_STR', None)
+HEROKU = os.environ.get('HEROKU', None)
 
 import paho.mqtt.client as mqtt #pip install paho-mqtt
 
@@ -17,23 +18,27 @@ import time
 import threading
 import urllib.parse as urlparse
 
-TOPIC_STATUS = 0
+TOPIC_STATUS = [0, 0]
+TOPIC_CHANGES = [0, 0]
+text_topic = ["Cвет в спальне ", "Удлинитель "]
 text_ON = "Включить"
 text_OFF = "Выключить"
 reply_ON = "Включено"
 reply_OFF = "Выключено"
-reset = "Перезагрузка"
 
 #https://apps.timwhitlock.info/emoji/tables/unicode
-icon_ON=u'\U00002705'    #2705
+icon_ON=u'\U00002705'   #2705
 icon_OFF=u'\U0000274C'  #274C
 
 chat_ids = [199220133, 537459034]
 
-bot = telegram.Bot(token=TOKEN, base_url='api.telegram.org/bot') #base_url='dg-telegram-bot-2.herokuapp.com/bot')
-
-logging.basicConfig(level=logging.DEBUG,
-                    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+if HEROKU == '1':
+    print("HEROKU")
+    bot = telegram.Bot(token=TOKEN, base_url='api.telegram.org/bot')
+else:
+    bot = telegram.Bot(token=TOKEN, base_url='dg-telegram-bot-2.herokuapp.com/bot')
+    
+#logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(name)s - %(levelname)s - %(message)s')
 
 # Define event callbacks
 def on_connect(client, userdata, flags, rc):
@@ -42,14 +47,15 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, obj, msg):
     global TOPIC_STATUS
     print("on_message " + msg.topic + " " + str(msg.qos) + " " + str(msg.payload))
-    if msg.topic == TOPIC:
-        if msg.payload == b'ON':
-            TOPIC_STATUS = 1
-            send_KB_()
-        elif msg.payload == b'OFF':
-            TOPIC_STATUS = 0
-            send_KB_()
-    print(TOPIC_STATUS)    
+    for t,s,c in TOPIC,TOPIC_STATUS,TOPIC_CHANGES:
+        if s == t:
+            c = 1
+            if msg.payload == b'ON':
+                s = 1
+            elif msg.payload == b'OFF':
+                s = 0          
+    print(TOPIC_STATUS, TOPIC_CHANGES)
+    send_KB_()
     
 def on_publish(client, obj, mid):
     print("on_publish mid: " + str(mid))
@@ -79,20 +85,25 @@ mqttc.connect(url.hostname, url.port)
 #mqttc.connect_async(url.hostname, url.port)
 
 # Start subscribe, with QoS level 0
-mqttc.subscribe(TOPIC)
+for t in TOPIC:
+    mqttc.subscribe(t)
 
 def send_KB_():
-    icon = icon_ON if TOPIC_STATUS else icon_OFF
-    not_icon = icon_OFF if TOPIC_STATUS else icon_ON
-    text = text_OFF if TOPIC_STATUS else text_ON
-    reply = reply_ON if TOPIC_STATUS else reply_OFF
+    icon = ["",]
+    not_icon = ["",]
+    text = ["",]
+    for i,ni,t,s,c in icon,not_icon,text,TOPIC_STATUS,TOPIC_CHANGES:
+        i = icon_ON if s else icon_OFF
+        ni = icon_OFF if s else icon_ON
+        t = text_OFF if s else text_ON
+        if c == 1:
+            reply = reply_ON if s else reply_OFF
     #print(icon, not_icon, text)
-    custom_keyboard = [['РЕЗЕРВ', 'Cвет в спальне  ' + icon ],
-                        [reset, text + "  " + not_icon]] 
+    custom_keyboard = [[text_topic[1] + icon[1], text_topic[0] + icon[0]],
+                        [text_topic[1] + "  " + text[1] + "  " + not_icon[1], text_topic[0] + "  " + text[0] + "  " + not_icon[0]]] 
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
     for chat_id in chat_ids:
         bot.send_message(chat_id=chat_id, text=reply + " " + icon, reply_markup=reply_markup)
-         
 
 
 class SimpleWebsite(object):
@@ -107,7 +118,7 @@ class BotComm(object):
     def __init__(self, TOKEN, NAME):
         super(BotComm, self).__init__()
         self.TOKEN = TOKEN
-        self.NAME=NAME
+        self.NAME = NAME
         self.bot = telegram.Bot(self.TOKEN)
         try:
             self.bot.setWebhook("https://{}.herokuapp.com/{}".format(self.NAME, self.TOKEN))
@@ -136,22 +147,17 @@ class BotComm(object):
     def _handler(self, bot, update):
       global TOPIC
       global TOPIC_STATUS
-      print(update.message.chat_id, update.message.text)
+      #print(update.message.chat_id, update.message.text)
       if update.message.text == 'kb' or update.message.text == 'keyboard':
-        #send_KB(bot, update)
         send_KB_()
-      elif text_ON in update.message.text:
-        mqttc.publish(TOPIC, "ON", 0, True)
-        #TOPIC_STATUS = 1
-        #send_KB(bot, update)
-      elif text_OFF in update.message.text:
-        mqttc.publish(TOPIC, "OFF", 0, True)
-        #TOPIC_STATUS = 0
-        #send_KB(bot, update)
-      elif reset in update.message.text:
-        #os.execv(__file__, sys.argv)
-        update.message.reply_text(text="Перезагружаем")
-        os.execl(sys.executable, 'python', __file__)        
+      elif text_ON in update.message.text and text_topic[0] in update.message.text:
+        mqttc.publish(TOPIC[0], "ON", 0, True)
+      elif text_OFF in update.message.text and text_topic[0] in update.message.text:
+        mqttc.publish(TOPIC[0], "OFF", 0, True)
+      elif text_ON in update.message.text and text_topic[1] in update.message.text:
+        mqttc.publish(TOPIC[1], "ON", 0, True)
+      elif text_OFF in update.message.text and text_topic[1] in update.message.text:
+        mqttc.publish(TOPIC[1], "OFF", 0, True)   
       else:
         update.message.reply_text(text=update.message.text)
 
