@@ -30,7 +30,7 @@ reply_OFF = "Выключено"
 icon_ON=u'\U00002705'   #2705
 icon_OFF=u'\U0000274C'  #274C
 
-chat_ids = [199220133, 537459034]
+chat_ids = [199220133, 537459034, 1069772271]
 
 if HEROKU == '1':
     print("HEROKU")
