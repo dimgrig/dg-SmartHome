@@ -157,7 +157,7 @@ class BotComm(object):
     def _handler(self, bot, update):
         global TOPIC
         global TOPIC_STATUS
-        #print(update.message.chat_id, update.message.text)
+        print("MESSAGE", update.message.chat_id, update.message.text)
         if update.message.text == 'kb' or update.message.text == 'keyboard':
             send_KB_()
         elif text_ON in update.message.text and text_topic[0] in update.message.text:
