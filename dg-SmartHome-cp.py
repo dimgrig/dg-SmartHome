@@ -108,7 +108,10 @@ def send_KB_():
     reply_markup = telegram.ReplyKeyboardMarkup(custom_keyboard)
     
     for chat_id in chat_ids:
-        pass#bot.send_message(chat_id=chat_id, text=reply + " " + icon_reply, reply_markup=reply_markup)
+        try:
+            bot.send_message(chat_id=chat_id, text=reply + " " + icon_reply, reply_markup=reply_markup)
+        except:
+            pass
     TOPIC_CHANGES[0] = 0
     TOPIC_CHANGES[1] = 0
 
